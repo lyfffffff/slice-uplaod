@@ -137,6 +137,9 @@ export default {
 		},
 		/** 切片上传 */
 		async postSlice(file) {
+			if (!file || !(file instanceof File)) {
+				return;
+			}
 			// 获取切片
 			const { slices, hash, count } = await this.sliceFile(file);
 
@@ -339,12 +342,12 @@ export default {
 		},
 		// 上传中
 		handleProgress(e, file) {
-			const _file = this.fileList.find((item) => item.uid == file.uid);
+			const _file = this.getFile(file.uid);
 			this.onProgress(e, _file, this.fileList);
 		},
 		// 上传成功
 		handleSuccess(res, file) {
-			const _file = this.fileList.find((item) => item.uid == file.uid);
+			const _file = this.getFile(file.uid);
 
 			if (_file) {
 				_file.status = 'finished';
@@ -362,7 +365,7 @@ export default {
 		// 上传失败
 		handleError(response, file) {
 			const { fileList } = this;
-			const _file = fileList.find((item) => item.uid == file.uid);
+			const _file = this.getFile(file.uid);
 
 			_file.status = 'fail';
 
@@ -387,6 +390,10 @@ export default {
 				);
 				loadingFile && this.postSlice(loadingFile);
 			}
+		},
+        // 从自定义的 fileList 中获取 file
+		getFile(uid) {
+			return this.fileList.find((item) => item.uid == uid);
 		},
 	},
 };

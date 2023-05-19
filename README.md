@@ -26,6 +26,7 @@
 ```
 通过切片上传实现上传暂停、上传大文件、刷新浏览器保留进度条等功能。
 以及功能优化：切片上传失败后尝试重新上传、多次切片上传失败后终止所有上传。
+以及最终源码地址。
 ```
 
 三、upload 组件结合业务
@@ -39,7 +40,7 @@
 
 ```
 一些前文所用的技术补充和总结。
-包括：常见的 `content-type`、`async awiat` 的应用、'canvas' 的使用、'vue-cropper' 库。
+包括：常见的 `content-type`、`async awiat` 的应用、'canvas' 的使用、'vue-cropper' 库等。
 ```
 
 ## upload 组件
@@ -348,7 +349,7 @@ source.cancel('canceled by the user.');
 
 继续上传的逻辑已在断点续传中实现过。
 
-### Upload v3.1
+### 切片上传 v3.1
 
 以上我们实现了一个可以暂停取消、断点续传的 Uploda 组件。
 
@@ -432,11 +433,11 @@ const start = async () => {
 
 ```
 
-### Upload 组件
+### 最终的 Upload 组件
 
-综上，我们完成了一个 Upload 组件的功能，基于 iview 的 Upload 组件，我自定义了一个 slice-upload 组件。
+综上，我们完成了一个 Upload 组件的功能，基于 iview 组件库的 Upload，我自定义了一个 slice-upload 组件。
 
-### API
+#### API
 
 | 属性名         | 描述                   | 类型     | 默认值                                  | 是否必须 |
 | -------------- | ---------------------- | -------- | --------------------------------------- | -------- |
@@ -449,12 +450,51 @@ const start = async () => {
 | onSuccess      | 文件上传成功时的钩子   | Function | -                                       | 否       |
 | onError        | 文件上传失败时的钩子   | Function | -                                       | 否       |
 
-### Events
+#### Events
 
-| 方法名     | 描述                 | 参数 |
-| ---------- | -------------------- | ---- |
-| clearFiles | 清空已上传的文件列表 | 无   |
+| 方法名          | 描述                                                                         | 参数 |
+| --------------- | ---------------------------------------------------------------------------- | ---- |
+| controllerReady | 抛出了一个对象，其中包含供给用户接收方法 upload。upload 方法用于传入一个文件，直接进行上传 | 无   |
+
+> Tips
+> iview 组件库为用户提供了一个 `clearFiles` 方法。通过 `this.$refs.upload.clearFiles` 调用。
+> 但其本质不就是子组件调用父组件方法嘛？
+> 这样我通过 `$refs` 调用 upload 组件里的任意方法都 ok 的。
+> 通过 `$refs` 调用父组件数据和方法是很不提倡滴！
+> 故还不如我抛出指定的方法的集合呢！
+
+```js
+// upload 组件
+mounted() {
+  this.$emit('controllerReady', {
+   upload: this.postSlice,
+  });
+ }
+
+// 用户在一个对象中接收组件抛出的方法，在需要的地方使用
+<SliceUpload
+ @controllerReady="receiveController(uploadSec.controller, $event)"
+>
+ <Button icon="ios-cloud-upload-outline">上传头像</Button>
+</SliceUpload>
+
+function receiveController(to, from) {
+ Object.assign(to, from);
+}
+```
+
+#### 源码
+
+[源码地址](https://github.com/lyfffffff/slice-uplaod)，位于 `components/slice-upload`
 
 ## Upload 组件结合业务
 
-接下来完成图片上传前裁剪，将裁剪后的图片自动裁成圆形。
+既然已经开发好了一个组件，第一件事当然是用起来啦！
+
+结合业务————头像上传
+
+进阶业务———— QQ 头像上传
+
+关键在于选完图片后，对选择的图片进行裁剪，将裁剪完的图片进行上传。
+
+## 总结与补充
